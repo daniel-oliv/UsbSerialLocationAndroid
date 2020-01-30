@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity
 
     /// location variables
     private Location location;
+    private Location preLocation;
     private TextView locationTv;
     private GoogleApiClient googleApiClient;
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -173,11 +174,12 @@ public class MainActivity extends AppCompatActivity
                     // Save email_public.txt file to /storage/emulated/0/DCIM folder
                     String publicDcimDirPath = ExternalStorageUtil.getPublicExternalStorageBaseDir(Environment.DIRECTORY_DCIM);
 
-                    File newFile = new File(publicDcimDirPath, "email_public.txt");
+                    File newFile = new File(publicDcimDirPath, "DriveTestLoraFile.txt");
 
                     FileWriter fw = new FileWriter(newFile);
-
+                    if(!newFile.exists()) newFile.createNewFile();
                     fw.write(dataToWrite);
+                    fw.append(dataToWrite);
 
                     fw.flush();
 
@@ -270,12 +272,12 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
                 if (!editText.getText().toString().equals("")) {
                     String data = editText.getText().toString();
+                        //createFile(data + "\r\n");
+                        writeToFile(data + "\n", getApplicationContext());
                     if (usbService != null) { // if UsbService was correctly binded, Send data
                         usbService.write(data.getBytes());
                         display.append(data);
                         display.append("\r\n");
-                        createFile(data + "\r\n" + textToPrint + "\r\n");
-                        //writeToFile(data + "\r\n" + textToPrint + "\r\n", getApplicationContext());
                     }
                 }
             }
@@ -402,6 +404,8 @@ public class MainActivity extends AppCompatActivity
             switch (msg.what) {
                 case UsbService.MESSAGE_FROM_SERIAL_PORT:
                     String data = (String) msg.obj;
+                    SimpleDateFormat format1 = new SimpleDateFormat("dd/MM - HH:mm:ss");
+                    Date currentTime = Calendar.getInstance().getTime();
                     if(data.contains(KEY_RX_COUNT))
                     {
                         int currentSec = (int) (System.currentTimeMillis())/1000;
@@ -410,24 +414,25 @@ public class MainActivity extends AppCompatActivity
                         if(!currentRx.equals(lastRxCount))
                         {
                             lastSec = currentSec;
-                            SimpleDateFormat format1 = new SimpleDateFormat("dd/MM - HH:mm:ss");
+                            
                             lastRxCount = currentRx;
                             textToPrint = lastRxCount + "\r\n";
                             textToPrint += parseData(data, KEY_SNR) + "\r\n";
                             textToPrint += parseData(data, KEY_RSSI) + "\r\n";
-
-                            Date currentTime = Calendar.getInstance().getTime();
                             textToPrint += format1.format(currentTime) + "\r\n";
-
-
                             mActivity.get().display.setText(textToPrint + "\r\n");
                         }
                         else
                         {
                             String secondsStr = (currentSec - lastSec) + " segundos atrás";
-                            mActivity.get().display.setText(textToPrint + secondsStr +"\r\n");
+                            mActivity.get().display.setText("Rec: "+ textToPrint + secondsStr +"\r\n");
                         }
 
+                    }
+                    else{
+                        textToPrint = format1.format(currentTime) +
+                                " - Received: [" +  data + "] \r\n";
+                        mActivity.get().display.setText(textToPrint);
                     }
                     //mActivity.get().display.append(data);
                     break;
@@ -533,7 +538,16 @@ public class MainActivity extends AppCompatActivity
   @Override
   public void onLocationChanged(Location location) {
     if (location != null) {
-      locationTv.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
+        //if(this.location == null || location.distanceTo(this.location) > 12){
+            this.location = location;
+            if(usbService != null){
+                String textToSend = "Lat:" + location.getLatitude() + ",Long:" + location.getLongitude()+";";
+                usbService.write(textToSend.getBytes());
+                //display.append("Location sent to usbserial:\n"+ textToSend);
+                //display.append("\r\n");
+            }
+        //}
+        locationTv.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
     }
   }
 
