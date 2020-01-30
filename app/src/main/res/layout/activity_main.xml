@@ -14,21 +14,31 @@
         android:id="@+id/textViewTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/buttonSend"
         android:layout_centerHorizontal="true"
         android:text="@string/serial_port"
-        android:textAppearance="?android:attr/textAppearanceLarge"/>
+        android:textAppearance="?android:attr/textAppearanceMedium"/>
 
     <TextView
         android:id="@+id/textView1"
         android:layout_width="match_parent"
         android:layout_height="150dp"
         android:layout_centerHorizontal="true"
-        android:layout_below="@+id/buttonSend"
+        android:layout_below="@+id/textViewTitle"
         android:layout_marginTop="10dp"
         android:background="#FFFFFF"
         android:scrollbars="vertical"
         android:gravity="bottom" />
+
+    <TextView
+        android:id="@+id/editTextTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonSend"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:text="Insira dados para salvar: "
+        android:textAppearance="?android:attr/textAppearanceMedium"/>
 
     <EditText
         android:id="@+id/editText1"
@@ -52,4 +62,34 @@
         android:layout_below="@+id/editText1"
         android:layout_marginTop="10dp"
         android:text="Salvar dados"/>
+
+
+    <TextView
+        android:id="@+id/currentLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:text="Current Location"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:layout_below="@+id/textView1"
+        />
+
+    <TextView
+        android:id="@+id/location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="20dp"
+        android:textSize="23sp"
+        android:gravity="center_horizontal"
+        android:layout_below="@+id/currentLocation"
+        />
 </RelativeLayout>
