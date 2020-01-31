@@ -432,7 +432,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     else{
                         receivedData += data;
-                        if(receivedData.contains("Lat:") && receivedData.contains(";")) {
+                        if(receivedData.length() > 256 || (receivedData.contains("!") && receivedData.contains(";"))  ) {
                             textToPrint = format1.format(currentTime) +
                                     " - Received: [" + receivedData + "] \r\n";
                             mActivity.get().display.setText(textToPrint);
@@ -503,6 +503,7 @@ public class MainActivity extends AppCompatActivity
 	                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
         &&  ActivityCompat.checkSelfPermission(this, 
 		             Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        display.append("onConnected - USB não reconhecido. Reinicie o aplicativo.\r\n");
       return;
     }
 
@@ -534,10 +535,12 @@ public class MainActivity extends AppCompatActivity
 
   @Override
   public void onConnectionSuspended(int i) {
+      display.append("onConnectionSuspended - USB não reconhecido. Reinicie o aplicativo.\r\n");
   }
 
   @Override
   public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+      display.append("onConnectionFailed - USB não reconhecido. Reinicie o aplicativo.\r\n");
   }
 
   @Override
@@ -550,6 +553,9 @@ public class MainActivity extends AppCompatActivity
                 usbService.write(textToSend.getBytes());
                 //display.append("Location sent to usbserial:\n"+ textToSend);
                 //display.append("\r\n");
+            }
+            else{
+                //display.append("USB não reconhecido. Reinicie o aplicativo.\r\n");
             }
         //}
         locationTv.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
