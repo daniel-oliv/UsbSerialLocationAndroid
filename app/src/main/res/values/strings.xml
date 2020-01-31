@@ -4,6 +4,6 @@
     <string name="app_name">Drive Test Lora Coodinates</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="serial_port">Dados lidos</string>
+    <string name="serial_port">Dados lidos e enviados</string>
 
 </resources>

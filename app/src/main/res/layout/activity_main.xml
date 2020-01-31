@@ -37,7 +37,7 @@
         android:layout_below="@+id/buttonSend"
         android:layout_centerHorizontal="true"
         android:layout_alignParentTop="true"
-        android:text="Insira dados para salvar: "
+        android:text="Insira dados para enviar pelo usb: "
         android:textAppearance="?android:attr/textAppearanceMedium"/>
 
     <EditText
@@ -61,7 +61,7 @@
         android:layout_alignRight="@+id/editText1"
         android:layout_below="@+id/editText1"
         android:layout_marginTop="10dp"
-        android:text="Salvar dados"/>
+        android:text="Enviar dados"/>
 
 
     <TextView

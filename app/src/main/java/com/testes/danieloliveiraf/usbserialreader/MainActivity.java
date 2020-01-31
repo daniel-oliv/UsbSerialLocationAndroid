@@ -432,7 +432,8 @@ public class MainActivity extends AppCompatActivity
                     }
                     else{
                         receivedData += data;
-                        if(receivedData.length() > 256 || (receivedData.contains("!") && receivedData.contains(";"))  ) {
+                        if(receivedData.length() > 256 || (receivedData.contains("!") && receivedData.contains(";"))  &&
+                                receivedData.indexOf("!") < receivedData.indexOf(";") ) {
                             textToPrint = format1.format(currentTime) +
                                     " - Received: [" + receivedData + "] \r\n";
                             mActivity.get().display.setText(textToPrint);
