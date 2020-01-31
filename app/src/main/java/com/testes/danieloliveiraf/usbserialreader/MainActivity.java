@@ -339,6 +339,7 @@ public class MainActivity extends AppCompatActivity
      */
     private static class MyHandler extends Handler {
         private final WeakReference<MainActivity> mActivity;
+        public static String receivedData = "";
 
         public MyHandler(MainActivity activity) {
             mActivity = new WeakReference<>(activity);
@@ -430,9 +431,13 @@ public class MainActivity extends AppCompatActivity
 
                     }
                     else{
-                        textToPrint = format1.format(currentTime) +
-                                " - Received: [" +  data + "] \r\n";
-                        mActivity.get().display.setText(textToPrint);
+                        receivedData += data;
+                        if(receivedData.contains("Lat:") && receivedData.contains(";")) {
+                            textToPrint = format1.format(currentTime) +
+                                    " - Received: [" + receivedData + "] \r\n";
+                            mActivity.get().display.setText(textToPrint);
+                            receivedData = "";
+                        }
                     }
                     //mActivity.get().display.append(data);
                     break;
