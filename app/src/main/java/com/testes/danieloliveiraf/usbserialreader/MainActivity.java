@@ -55,13 +55,21 @@ import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Calendar;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity 
         implements GoogleApiClient.ConnectionCallbacks,
                    GoogleApiClient.OnConnectionFailedListener, LocationListener{
+
+    private int nCounter = 0;
+    int curTime = 0, sentTime = 0, waitTime = 2000;
+    int TIMER_DELAY = 500;
+    final String ID_SEPARATOR = ">";
 
     /// location variables
     private Location location;
@@ -84,10 +92,6 @@ public class MainActivity extends AppCompatActivity
      */
 
     private static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE_PERMISSION = 1;
-
-    public static final String KEY_RX_COUNT = "RX_GOOD_CNT";
-    public static final String KEY_SNR = "SNR";
-    public static final String KEY_RSSI = "RSSI";
 
     public static String lastRxCount = "";
     public static String textToPrint = "";
@@ -222,6 +226,8 @@ public class MainActivity extends AppCompatActivity
     private TextView display;
     private EditText editText;
     private MyHandler mHandler;
+    private Handler timerHandler;
+    final int iTimer = 0;
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName arg0, IBinder arg1) {
@@ -261,6 +267,7 @@ public class MainActivity extends AppCompatActivity
         addOnConnectionFailedListener(this).build();
 
         mHandler = new MyHandler(this);
+        timerHandler = new Handler();
 
         display = (TextView) findViewById(R.id.textView1);
         display.setMovementMethod(new ScrollingMovementMethod());
@@ -282,6 +289,8 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+        timerHandler.post(new MyRunnable(timerHandler, iTimer, display));
     }
 
     @Override
@@ -339,10 +348,38 @@ public class MainActivity extends AppCompatActivity
      */
     private static class MyHandler extends Handler {
         private final WeakReference<MainActivity> mActivity;
-        public static String receivedData = "";
+
+        public static final String LORA_MSG_SENT_MARKER = "_LS_";
+        public static String buffer = "";
+        public static String anotherData = "";
+        public static LinkedHashMap<String, String> receivedData;
+        public static String[] devNames = {"16", "19"};
+        public static int numDevices = 2;
+        public static int currentDev = 0;
+        public static Location handlerLoc = null;
+
+        public static void nextDevice(){
+            currentDev++;
+            if(currentDev == numDevices){
+                currentDev = 0;
+            }
+        }
+
+        public static String latLongString(){
+            if( handlerLoc != null ){
+                return ID_SEPARATOR+MyHandler.currentDev+ID_SEPARATOR + "Lat:" + handlerLoc.getLatitude() + ",Long:" + handlerLoc.getLongitude()+";";
+            }
+            else{
+               return "";
+            }
+        }
 
         public MyHandler(MainActivity activity) {
             mActivity = new WeakReference<>(activity);
+            receivedData = new LinkedHashMap<>();
+            for (int i = 0; i < numDevices; i++) {
+                receivedData.put(devNames[i], "");
+            }
         }
 
         private String parseData(String data, String key){
@@ -407,37 +444,51 @@ public class MainActivity extends AppCompatActivity
                     String data = (String) msg.obj;
                     SimpleDateFormat format1 = new SimpleDateFormat("dd/MM - HH:mm:ss");
                     Date currentTime = Calendar.getInstance().getTime();
-                    if(data.contains(KEY_RX_COUNT))
+                    String timeStr = format1.format(currentTime)+ " - ";
                     {
-                        int currentSec = (int) (System.currentTimeMillis())/1000;
-                        int iRx = data.indexOf(KEY_RX_COUNT);
-                        String currentRx = data.substring(iRx, data.indexOf("\r\n",iRx));
-                        if(!currentRx.equals(lastRxCount))
-                        {
-                            lastSec = currentSec;
-                            
-                            lastRxCount = currentRx;
-                            textToPrint = lastRxCount + "\r\n";
-                            textToPrint += parseData(data, KEY_SNR) + "\r\n";
-                            textToPrint += parseData(data, KEY_RSSI) + "\r\n";
-                            textToPrint += format1.format(currentTime) + "\r\n";
-                            mActivity.get().display.setText(textToPrint + "\r\n");
-                        }
-                        else
-                        {
-                            String secondsStr = (currentSec - lastSec) + " segundos atrás";
-                            mActivity.get().display.setText("Rec: "+ textToPrint + secondsStr +"\r\n");
-                        }
+                        buffer += data;
+                        int chStartI = buffer.indexOf("!");
+                        int chEndI = buffer.indexOf(";");
+                        if( (buffer.contains("!") && buffer.contains(";"))  &&
+                            chStartI < chEndI ) {
+                            String currentBuffer = buffer.substring(chStartI, chEndI+1);
+                            buffer = buffer.substring(chEndI+1);
+                            int chNameI =  currentBuffer.indexOf(">");
+                            String devName = null;
+                            // formato mensagem !XX>1121212;
+                            if(chNameI >= 3){
+                                devName = currentBuffer.substring(chNameI-2, chNameI);
+                            }
+                            if(devName != null && chNameI+1 < currentBuffer.length()){
+                                receivedData.put(devName, timeStr + currentBuffer.substring(chNameI+1));
+                                if(currentBuffer.contains(LORA_MSG_SENT_MARKER))
+                                {
+                                    String textToSend = MyHandler.latLongString();
+                                }
+                                nextDevice();
+                            }
+                            else{
+                                anotherData = currentBuffer;
+                            }
 
-                    }
-                    else{
-                        receivedData += data;
-                        if(receivedData.length() > 256 || (receivedData.contains("!") && receivedData.contains(";"))  &&
-                                receivedData.indexOf("!") < receivedData.indexOf(";") ) {
-                            textToPrint = format1.format(currentTime) +
-                                    " - Received: [" + receivedData + "] \r\n";
+                            textToPrint = "";
+                            for (int i = 0; i < numDevices; i++) {
+                                textToPrint +=  " - " + devNames[i] + " : [" + receivedData.get(devNames[i]) + "] \r\n";
+                            }
+                            textToPrint += " - "timeStr + anotherData;
+
                             mActivity.get().display.setText(textToPrint);
-                            receivedData = "";
+                        }
+                        else if(buffer.length() > 256){
+                            anotherData = buffer;
+                            buffer = "";
+                            textToPrint = format1.format(currentTime)+ "\r\n";
+
+                            for (int i = 0; i < numDevices; i++) {
+                                textToPrint +=  " - " + devNames[i] + " : [" + receivedData.get(devNames[i]) + "] \r\n";
+                            }
+                            textToPrint += timeStr + anotherData;
+                            mActivity.get().display.setText(textToPrint);
                         }
                     }
                     //mActivity.get().display.append(data);
@@ -549,18 +600,45 @@ public class MainActivity extends AppCompatActivity
     if (location != null) {
         //if(this.location == null || location.distanceTo(this.location) > 12){
             this.location = location;
-            if(usbService != null){
-                String textToSend = "Lat:" + location.getLatitude() + ",Long:" + location.getLongitude()+";";
-                usbService.write(textToSend.getBytes());
-                //display.append("Location sent to usbserial:\n"+ textToSend);
-                //display.append("\r\n");
-            }
-            else{
-                //display.append("USB não reconhecido. Reinicie o aplicativo.\r\n");
-            }
+            MyHandler.handlerLoc = location;
+//            if(usbService != null){
+//                String textToSend = MyHandler.latLongString();
+//                MyHandler.nextDevice();
+//                usbService.write(textToSend.getBytes());
+//                //display.append("Location sent to usbserial:\n"+ textToSend);
+//                //display.append("\r\n");
+//            }
+//            else{
+//                //display.append("USB não reconhecido. Reinicie o aplicativo.\r\n");
+//            }
         //}
         locationTv.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
     }
   }
+
+    class MyRunnable implements Runnable {
+        private Handler handler;
+        private int i;
+        private TextView textView;
+
+        public MyRunnable(Handler handler, int i, TextView textView) {
+            this.handler = handler;
+            this.i = i;
+            this.textView = textView;
+        }
+        @Override
+        public void run() {
+            this.handler.postDelayed(this, TIMER_DELAY);
+            this.i++;
+            //this.textView.setText(String.format("%d", i));
+            curTime = i * TIMER_DELAY;
+            if(curTime - sentTime > waitTime)
+            if(usbService != null){
+                String textToSend = MyHandler.latLongString();
+                MyHandler.nextDevice();
+                usbService.write(textToSend.getBytes());
+            }
+        }
+    }
 
 }
