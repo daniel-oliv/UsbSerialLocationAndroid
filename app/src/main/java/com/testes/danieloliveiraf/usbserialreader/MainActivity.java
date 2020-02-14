@@ -59,8 +59,6 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Calendar;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity 
         implements GoogleApiClient.ConnectionCallbacks,
@@ -69,7 +67,8 @@ public class MainActivity extends AppCompatActivity
     private int nCounter = 0;
     int curTime = 0, sentTime = 0, waitTime = 2000;
     int TIMER_DELAY = 500;
-    final String ID_SEPARATOR = ">";
+    public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
+
 
     /// location variables
     private Location location;
@@ -290,6 +289,8 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        Device.initList();
+
         timerHandler.post(new MyRunnable(timerHandler, iTimer, display));
     }
 
@@ -352,34 +353,12 @@ public class MainActivity extends AppCompatActivity
         public static final String LORA_MSG_SENT_MARKER = "_LS_";
         public static String buffer = "";
         public static String anotherData = "";
-        public static LinkedHashMap<String, String> receivedData;
         public static String[] devNames = {"16", "19"};
         public static int numDevices = 2;
         public static int currentDev = 0;
-        public static Location handlerLoc = null;
-
-        public static void nextDevice(){
-            currentDev++;
-            if(currentDev == numDevices){
-                currentDev = 0;
-            }
-        }
-
-        public static String latLongString(){
-            if( handlerLoc != null ){
-                return ID_SEPARATOR+MyHandler.currentDev+ID_SEPARATOR + "Lat:" + handlerLoc.getLatitude() + ",Long:" + handlerLoc.getLongitude()+";";
-            }
-            else{
-               return "";
-            }
-        }
 
         public MyHandler(MainActivity activity) {
             mActivity = new WeakReference<>(activity);
-            receivedData = new LinkedHashMap<>();
-            for (int i = 0; i < numDevices; i++) {
-                receivedData.put(devNames[i], "");
-            }
         }
 
         private String parseData(String data, String key){
@@ -442,9 +421,9 @@ public class MainActivity extends AppCompatActivity
             switch (msg.what) {
                 case UsbService.MESSAGE_FROM_SERIAL_PORT:
                     String data = (String) msg.obj;
-                    SimpleDateFormat format1 = new SimpleDateFormat("dd/MM - HH:mm:ss");
                     Date currentTime = Calendar.getInstance().getTime();
-                    String timeStr = format1.format(currentTime)+ " - ";
+                    String timeStr = MainActivity.dateTimeFormat.format(currentTime)+ " - ";
+                    mActivity.get().display.append(timeStr + data);
                     {
                         buffer += data;
                         int chStartI = buffer.indexOf("!");
@@ -452,42 +431,38 @@ public class MainActivity extends AppCompatActivity
                         if( (buffer.contains("!") && buffer.contains(";"))  &&
                             chStartI < chEndI ) {
                             String currentBuffer = buffer.substring(chStartI, chEndI+1);
-                            buffer = buffer.substring(chEndI+1);
+                            if(chStartI > 0){
+                                buffer = buffer.substring(0,chStartI) + buffer.substring(chEndI + 1);
+                            }
+                            else {
+                                buffer = buffer.substring(chEndI + 1);
+                            }
                             int chNameI =  currentBuffer.indexOf(">");
                             String devName = null;
+                            Device dev = null;
                             // formato mensagem !XX>1121212;
                             if(chNameI >= 3){
                                 devName = currentBuffer.substring(chNameI-2, chNameI);
                             }
-                            if(devName != null && chNameI+1 < currentBuffer.length()){
-                                receivedData.put(devName, timeStr + currentBuffer.substring(chNameI+1));
-                                if(currentBuffer.contains(LORA_MSG_SENT_MARKER))
-                                {
-                                    String textToSend = MyHandler.latLongString();
-                                }
-                                nextDevice();
+                            if(devName != null){
+                                dev = Device.list.get(devName);
+                            }
+                            if(dev!=null && chNameI+1 < currentBuffer.length()){
+                                dev.treatMessage(currentTime, currentBuffer.substring(chNameI+1));
                             }
                             else{
-                                anotherData = currentBuffer;
+                                anotherData = " - AN : [" + timeStr + currentBuffer + "]";
                             }
 
-                            textToPrint = "";
-                            for (int i = 0; i < numDevices; i++) {
-                                textToPrint +=  " - " + devNames[i] + " : [" + receivedData.get(devNames[i]) + "] \r\n";
-                            }
-                            textToPrint += " - "timeStr + anotherData;
-
+                            textToPrint = Device.getReceivedMsgs();
+                            textToPrint += anotherData;
                             mActivity.get().display.setText(textToPrint);
                         }
-                        else if(buffer.length() > 256){
-                            anotherData = buffer;
+                        if(buffer.length() > 32){
+                            anotherData = " - AN : [" + timeStr + buffer + "] > 32";
                             buffer = "";
-                            textToPrint = format1.format(currentTime)+ "\r\n";
-
-                            for (int i = 0; i < numDevices; i++) {
-                                textToPrint +=  " - " + devNames[i] + " : [" + receivedData.get(devNames[i]) + "] \r\n";
-                            }
-                            textToPrint += timeStr + anotherData;
+                            textToPrint = Device.getReceivedMsgs();
+                            textToPrint += anotherData;
                             mActivity.get().display.setText(textToPrint);
                         }
                     }
@@ -599,19 +574,8 @@ public class MainActivity extends AppCompatActivity
   public void onLocationChanged(Location location) {
     if (location != null) {
         //if(this.location == null || location.distanceTo(this.location) > 12){
-            this.location = location;
-            MyHandler.handlerLoc = location;
-//            if(usbService != null){
-//                String textToSend = MyHandler.latLongString();
-//                MyHandler.nextDevice();
-//                usbService.write(textToSend.getBytes());
-//                //display.append("Location sent to usbserial:\n"+ textToSend);
-//                //display.append("\r\n");
-//            }
-//            else{
-//                //display.append("USB não reconhecido. Reinicie o aplicativo.\r\n");
-//            }
-        //}
+        this.location = location;
+        Device.location = location;
         locationTv.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
     }
   }
@@ -630,13 +594,22 @@ public class MainActivity extends AppCompatActivity
         public void run() {
             this.handler.postDelayed(this, TIMER_DELAY);
             this.i++;
+//            display.append("Thread curTime: " + curTime + "\n");
             //this.textView.setText(String.format("%d", i));
             curTime = i * TIMER_DELAY;
-            if(curTime - sentTime > waitTime)
-            if(usbService != null){
-                String textToSend = MyHandler.latLongString();
-                MyHandler.nextDevice();
-                usbService.write(textToSend.getBytes());
+            if(curTime - sentTime > waitTime) {
+                if(Device.current == null)
+                {
+                    display.append("null device");
+                    Device.next();
+                }
+                if(Device.current != null && Device.current.state == Device.DevState.UNREACHED){
+                    Device.next();
+                }
+                if (usbService != null && Device.current != null) {
+                    usbService.write(Device.current.cmdRequestState());
+                    sentTime = curTime;
+                }
             }
         }
     }
