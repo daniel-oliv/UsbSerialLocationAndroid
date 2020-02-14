@@ -65,6 +65,7 @@ public class Device {
         this.receive = MainActivity.dateTimeFormat.format(time) + " - [" + msg+"]  ST{"+ this.state.name() +")";
     }
 
+    //>19>U;
     public byte[] cmdRequestState(){
         this.attempts++;
         if(attempts >= MAX_ATTEMPTS_UPDATE){
