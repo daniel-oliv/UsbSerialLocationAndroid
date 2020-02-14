@@ -65,13 +65,18 @@ public class Device {
         this.receive = MainActivity.dateTimeFormat.format(time) + " - [" + msg+"]  ST{"+ this.state.name() +")";
     }
 
-    //>19>U;
+    //   >19>U;
     public byte[] cmdRequestState(){
         this.attempts++;
         if(attempts >= MAX_ATTEMPTS_UPDATE){
             this.state = DevState.UNREACHED;
         }
         return ( this.ID_STR() + UPDATE_STATE_STR + END_MSG_CHAR).getBytes();
+    }
+
+    //   >19>Lat:-18.87878,Long:-42.787898798;
+    public byte[] cmdSendLatLong(){
+        return (  this.strLatLong() ).getBytes();
     }
 
     public String strLatLong(){

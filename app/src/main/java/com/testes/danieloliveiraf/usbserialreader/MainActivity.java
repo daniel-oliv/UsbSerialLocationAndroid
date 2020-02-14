@@ -603,11 +603,12 @@ public class MainActivity extends AppCompatActivity
                     display.append("null device");
                     Device.next();
                 }
-                if(Device.current != null && Device.current.state == Device.DevState.UNREACHED){
+                if(Device.current != null){
                     Device.next();
                 }
                 if (usbService != null && Device.current != null) {
-                    usbService.write(Device.current.cmdRequestState());
+                    display.append("Sent to: " + Device.current.name + " " + Device.current.strLatLong() + "\n" );
+                    usbService.write(Device.current.cmdSendLatLong());
                     sentTime = curTime;
                 }
             }
