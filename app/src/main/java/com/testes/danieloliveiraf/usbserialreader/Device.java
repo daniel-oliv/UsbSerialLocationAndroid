@@ -17,8 +17,8 @@ public class Device {
     final String STR_READY_TO_SEND = "_RS_";
     final String STR_SENDING = "_SD_";
     final String STR_SENT = "_ST_";
-
-    public static String[] devNames = {"16", "19"};
+.
+    public static String[] devNames = {"19","16", "4", "3", "17", "12"};
     public static int numDevices = 2;
     public static int currentIndex = 0;
     public static Device current;
