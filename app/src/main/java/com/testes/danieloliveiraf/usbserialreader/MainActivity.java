@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity
                    GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
     private int nCounter = 0;
-    int curTime = 0, sentTime = 0, waitTime = 2000;
+    int curTime = 0, sentTime = 0;
     int TIMER_DELAY = 500;
     public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
 
@@ -279,11 +279,15 @@ public class MainActivity extends AppCompatActivity
                 if (!editText.getText().toString().equals("")) {
                     String data = editText.getText().toString();
                         //createFile(data + "\r\n");
-                        writeToFile(data + "\n", getApplicationContext());
                     if (usbService != null) { // if UsbService was correctly binded, Send data
-                        usbService.write(data.getBytes());
-                        display.append(data);
-                        display.append("\r\n");
+                        String cmdStr = Device.scheduleCommand(data);
+                        if(cmdStr.length() > 0){
+                            //usbService.write(cmdStr.getBytes()); mandar comando na janela de tempo do dispositivo
+                            display.append("Comando agendado: " + data);
+                            display.append("\n");
+                        } else{
+                            display.append("Comando não reconhecido!!!" + "\n");
+                        }
                     }
                 }
             }
@@ -596,20 +600,38 @@ public class MainActivity extends AppCompatActivity
             this.i++;
 //            display.append("Thread curTime: " + curTime + "\n");
             //this.textView.setText(String.format("%d", i));
+            if(display.getText().length() > 3000){
+                display.setText("");
+            }
+
+            if(Device.current == null)
+            {
+                display.append("null device");
+                Device.next();
+            }
+
+
             curTime = i * TIMER_DELAY;
-            if(curTime - sentTime > waitTime) {
-                if(Device.current == null)
-                {
-                    display.append("null device");
-                    Device.next();
-                }
-                if(Device.current != null){
-                    Device.next();
+            int waitTime = Device.MAX_PACKET_TIME + 200; // 4200 ms
+            if(Device.current != null){
+                waitTime = Device.current.getWaitTime();
+            }
+            if(waitTime >= Device.MAX_PACKET_TIME){
+                display.append("Tempo de pacote inválido. Usando máximo tempo." + "\n" );
+            }
+
+            if(Device.current != null && curTime - sentTime >= waitTime) {
+
+                /// treating SF changed by the user
+                if(Device.current.treatCommand().length() == 0){
+                    display.append("Problema ao executar comando" + "\n" );
                 }
                 if (usbService != null && Device.current != null) {
-                    display.append("Sent to: " + Device.current.name + " " + Device.current.strLatLong() + "\n" );
-                    usbService.write(Device.current.cmdSendLatLong());
+                    String strCmd = Device.current.strSfAndLatLong();
+                    display.append("Enviando: " + strCmd + "\n" );
+                    usbService.write(strCmd.getBytes());
                     sentTime = curTime;
+                    Device.next();
                 }
             }
         }
