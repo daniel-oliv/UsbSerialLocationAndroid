@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity
 
     private int nCounter = 0;
     int curTime = 0, sentTime = 0;
-    int TIMER_DELAY = 500;
+    int TIMER_DELAY = 100;
     public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
 
 
@@ -621,17 +621,20 @@ public class MainActivity extends AppCompatActivity
             }
 
             if(Device.current != null && curTime - sentTime >= waitTime) {
-
+                Device.next();
                 /// treating SF changed by the user
                 if(Device.current.treatCommand().length() == 0){
                     display.append("Problema ao executar comando" + "\n" );
                 }
                 if (usbService != null && Device.current != null) {
                     String strCmd = Device.current.strSfAndLatLong();
-                    display.append("Enviando: " + strCmd + "\n" );
-                    usbService.write(strCmd.getBytes());
-                    sentTime = curTime;
-                    Device.next();
+                    if(strCmd.isEmpty()){
+                        display.append("Ative a localização. \n" );
+                    }else{
+                        display.append("Enviando: " + strCmd + "\n" );
+                        usbService.write(strCmd.getBytes());
+                        sentTime = curTime;
+                    }
                 }
             }
         }
