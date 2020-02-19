@@ -21,10 +21,10 @@ public class Device {
     final String STR_SENDING = "_SD_";
     final String STR_SENT = "_ST_";
 
-//    public static String[] devNames = {"3", "4", "12", "16", "17", "19"};
+//    public static String[] devNames = {"2", "4", "12", "16", "17", "19"};
 //    public static int initialDevSFs[] = {7, 8, 9, 11, 12, 10};
 
-    public static String[] devNames = {"3", "4", "12", "16", "17"};
+    public static String[] devNames = {"2", "4", "12", "16", "17"};
     public static int initialDevSFs[] = {7, 8, 9, 11, 12};
 
 //    public static String[] devNames = {"4"};
