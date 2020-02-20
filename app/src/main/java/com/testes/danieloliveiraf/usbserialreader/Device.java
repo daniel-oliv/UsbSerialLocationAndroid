@@ -48,8 +48,11 @@ public class Device {
     public Date timeRec;
     public int attempts;
     public String name;
-    int SF;
+    public static String pendentStCmds = "";
     public String pendentCmds = "";
+    int sentTime;
+    public static int timeToSumInPacketTime = 3000;
+    int SF;
     public void setSF(int SF){
         for (int ind = 0; ind < allSFS.length; ind++) {
             if(allSFS[ind] == SF){
@@ -74,6 +77,7 @@ public class Device {
         attempts = 0;
         this.name = name;
         this.SF = SF;
+        sentTime = 0;
     }
 
     public void treatMessage(Date time, String msg){
@@ -166,15 +170,31 @@ public class Device {
     }
 
     public int getWaitTime(){
-       return this.getPackTime() + 200;
+       return this.getPackTime() + timeToSumInPacketTime;
     }
 
     public static String scheduleCommand(String str){
         String ret = "";
 
         try {
+            /// Set mode to send -> Ex.: MO,0 -> 0: espera o current terminar de mandar (tempo teórico, guardado em packetTime_ms) ;
+            // 1: envia assim que o packTime for passar, dadndo priorodade para os dispositivos que estão a mais tempo sem mandar
+            if(str.contains("MO")){
+                String params [] = str.split(",");
+                if(params.length >= 2){
+                    int newMode = Integer.parseInt(params[1]);
+                    if(MainActivity.isValidMode(newMode)) {
+                        if(params.length == 3){
+                            int offset = Integer.parseInt(params[2]);
+                        }
+                        Device.pendentStCmds = str;
+                        ret = "OK";
+                    }
+                }
+            }
+
             /// Set SF -> Ex.: SF,4,12 -> SF, DISP, SF_NUM
-            if(str.contains("SF")){
+            else if(str.contains("SF")){
                 String params [] = str.split(",");
                 if(params.length == 3){
                     int SF = Integer.parseInt(params[2]);
@@ -194,9 +214,25 @@ public class Device {
         String ret = "";
 
         try {
+
+            if(Device.pendentStCmds.contains("MO")){
+                String params [] = Device.pendentStCmds.split(",");
+                if(params.length >= 2){
+                    int newMode = Integer.parseInt(params[1]);
+                    if(MainActivity.setModeToSend(newMode)) {
+                        Device.pendentStCmds = "";
+                        if(params.length == 3){
+                            timeToSumInPacketTime = Integer.parseInt(params[2]);
+                        }
+                        ret = "OK";
+                    }
+                }
+            }
+
             if (pendentCmds.length() == 0){
                 return "NADA";
             }
+
             /// Set SF -> Ex.: SF,4,12 -> SF, DISP, SF_NUM
             if(pendentCmds.contains("SF")){
                 String params [] = pendentCmds.split(",");

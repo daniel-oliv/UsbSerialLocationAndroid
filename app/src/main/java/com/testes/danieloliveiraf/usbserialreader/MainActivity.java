@@ -64,8 +64,22 @@ public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks,
                    GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
+    public static int modeToSend = 1;
+    public static boolean setModeToSend(int mode){
+        if(isValidMode(mode)){
+            modeToSend = mode;
+            return true;
+        }
+        return false;
+    }
+    public static boolean isValidMode(int mode){
+        if(mode == 1 || mode == 0){
+            return true;
+        }
+        return false;
+    }
     private int nCounter = 0;
-    int curTime = 0, sentTime = 0;
+    static int curTime = 0, sentTime = 0, curTimeDelayed = 0;
     int TIMER_DELAY = 100;
     public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
 
@@ -77,7 +91,7 @@ public class MainActivity extends AppCompatActivity
     private GoogleApiClient googleApiClient;
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private LocationRequest locationRequest;
-    private static final long UPDATE_INTERVAL = 5000, FASTEST_INTERVAL = 5000; // = 5 seconds
+    private static final long UPDATE_INTERVAL = 1000, FASTEST_INTERVAL = 1000; // = 5 seconds
     // lists for permissions
     private ArrayList<String> permissionsToRequest;
     private ArrayList<String> permissionsRejected = new ArrayList<>();
@@ -226,7 +240,7 @@ public class MainActivity extends AppCompatActivity
     private EditText editText;
     private MyHandler mHandler;
     private Handler timerHandler;
-    final int iTimer = 0;
+    static int iTimer = 0;
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName arg0, IBinder arg1) {
@@ -588,36 +602,102 @@ public class MainActivity extends AppCompatActivity
         private Handler handler;
         private int i;
         private TextView textView;
+        private ArrayList<Device> readyToSend;
 
         public MyRunnable(Handler handler, int i, TextView textView) {
             this.handler = handler;
-            this.i = i;
             this.textView = textView;
         }
         @Override
         public void run() {
-            this.handler.postDelayed(this, TIMER_DELAY);
-            this.i++;
+            //this.handler.postDelayed(this, TIMER_DELAY);
+            iTimer++;
 //            display.append("Thread curTime: " + curTime + "\n");
             //this.textView.setText(String.format("%d", i));
             if(display.getText().length() > 3000){
                 display.setText("");
             }
+            curTimeDelayed = curTime;
+            curTime = iTimer * TIMER_DELAY;
+            if(curTime % 5000 == 0){
+                display.append("Mode de envio: " + modeToSend + "\n" );
+                display.append("Offset time: " + Device.timeToSumInPacketTime + "\n" );
+            }
+            if(modeToSend == 0){
+                runMode0();
+            } else if(modeToSend == 1){
+                runMode1();
+            }
 
+
+            if(curTime > 1000000000){
+                display.append("Zerei!!!!!!!: " + "\n" );
+                curTime = 0;
+                sentTime = 0;
+                iTimer = 0;
+                for (int m = 0; m < Device.devNames.length; m++) {
+                    Device dev = Device.list.get(Device.devNames[m]);
+                    dev.sentTime = 0;
+                }
+
+            }
+            this.handler.postDelayed(this, TIMER_DELAY);
+        }
+
+
+        ////  mandar uma vez a cada chamado da thread (run()), observando apenas se
+        public void runMode1(){
+            Device devToSent = null;
+            for (int m = 0; m < Device.devNames.length; m++){
+                Device dev = Device.list.get(Device.devNames[m]);
+                int waitTime = dev.getWaitTime();
+                if(curTime - dev.sentTime >= waitTime) { /// se o device está disponível para enviar, já é candidato
+                    if(curTime > 1000 * 10){
+                        display.append("dev.sentTime " + dev.sentTime + "\n" );
+                        display.append("curTime " + curTime + "\n" );
+                        display.append("waitTime " + waitTime + "\n" );
+                        display.append("iTimer " + iTimer + "\n" );
+                    }
+                    if (devToSent != null) {
+                        if (devToSent.sentTime > dev.sentTime) { /// se o dispositivo selecionado para enviar tiver enviado depois, pegar o outro
+                            devToSent = dev;
+                        }
+                    }else{ /// se não foi selecionado nenhum, pegar esse por enquanto
+                        devToSent = dev;
+                    }
+                }
+
+            }
+
+            if(devToSent != null){
+                /// treating SF changed by the user
+                if(devToSent.treatCommand().length() == 0){
+                    display.append("Problema ao executar comando" + "\n" );
+                }
+                if (usbService != null) {
+                    String strCmd = devToSent.strSfAndLatLong();
+                    if(strCmd.isEmpty()){
+                        display.append("Ative a localização. \n" );
+                    }else{
+                        display.append("Enviando: " + strCmd + "\n" );
+                        usbService.write(strCmd.getBytes());
+                        sentTime = curTime;
+                        devToSent.sentTime = sentTime;
+                    }
+                }
+            }
+        }
+
+        public void runMode0(){
             if(Device.current == null)
             {
                 display.append("null device");
                 Device.next();
             }
 
-
-            curTime = i * TIMER_DELAY;
             int waitTime = Device.MAX_PACKET_TIME + 200; // 4200 ms
             if(Device.current != null){
                 waitTime = Device.current.getWaitTime();
-            }
-            if(waitTime >= Device.MAX_PACKET_TIME){
-                display.append("Tempo de pacote inválido. Usando máximo tempo." + "\n" );
             }
 
             if(Device.current != null && curTime - sentTime >= waitTime) {
