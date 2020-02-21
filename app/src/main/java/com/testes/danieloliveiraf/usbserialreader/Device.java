@@ -36,6 +36,8 @@ public class Device {
     public static int allSFS[] = {7, 8, 9, 10, 11, 12};
     public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
 //    public static int[] packetTime_ms = {200, 3000, 200, 200, 100, 2000};
+    public static int timeToSumInPacketTime = 2000;
+    public static double packetTimeFactor = 1.0;
     public static int MAX_PACKET_TIME = 4000;
 
     public static int numDevices = devNames.length;
@@ -51,7 +53,6 @@ public class Device {
     public static String pendentStCmds = "";
     public String pendentCmds = "";
     int sentTime;
-    public static int timeToSumInPacketTime = 3000;
     int SF;
     public void setSF(int SF){
         for (int ind = 0; ind < allSFS.length; ind++) {
@@ -169,8 +170,24 @@ public class Device {
         return MAX_PACKET_TIME;
     }
 
+    public static int[] getWaitTimeArray(){
+        int waitArr [] = new int[devNames.length];
+        for (int m=0; m < devNames.length; m++){
+            waitArr[m] = list.get(devNames[m]).getWaitTime();
+        }
+        return waitArr;
+    }
+    public static String printArray(int [] array){
+        String ret ="[";
+        for (int m=0; m < array.length; m++){
+            ret += array[m] + ", ";
+        }
+        ret += "]";
+
+        return ret;
+    }
     public int getWaitTime(){
-       return this.getPackTime() + timeToSumInPacketTime;
+       return ((int) (this.getPackTime() * packetTimeFactor) )+ timeToSumInPacketTime;
     }
 
     public static String scheduleCommand(String str){

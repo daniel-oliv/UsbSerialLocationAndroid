@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity
     }
     private int nCounter = 0;
     static int curTime = 0, sentTime = 0, curTimeDelayed = 0;
-    int TIMER_DELAY = 100;
+    int TIMER_DELAY = 400;
     public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
 
 
@@ -622,6 +622,7 @@ public class MainActivity extends AppCompatActivity
             if(curTime % 5000 == 0){
                 display.append("Mode de envio: " + modeToSend + "\n" );
                 display.append("Offset time: " + Device.timeToSumInPacketTime + "\n" );
+                display.append("Tempo de espera: " + Device.printArray(Device.getWaitTimeArray()) + "\n" );
             }
             if(modeToSend == 0){
                 runMode0();
@@ -652,12 +653,6 @@ public class MainActivity extends AppCompatActivity
                 Device dev = Device.list.get(Device.devNames[m]);
                 int waitTime = dev.getWaitTime();
                 if(curTime - dev.sentTime >= waitTime) { /// se o device está disponível para enviar, já é candidato
-                    if(curTime > 1000 * 10){
-                        display.append("dev.sentTime " + dev.sentTime + "\n" );
-                        display.append("curTime " + curTime + "\n" );
-                        display.append("waitTime " + waitTime + "\n" );
-                        display.append("iTimer " + iTimer + "\n" );
-                    }
                     if (devToSent != null) {
                         if (devToSent.sentTime > dev.sentTime) { /// se o dispositivo selecionado para enviar tiver enviado depois, pegar o outro
                             devToSent = dev;
