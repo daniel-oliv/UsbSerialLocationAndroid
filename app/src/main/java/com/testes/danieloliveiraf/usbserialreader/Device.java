@@ -35,9 +35,14 @@ public class Device {
     /// SFs - 7 a 12
     public static int allSFS[] = {7, 8, 9, 10, 11, 12};
     public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
-//    public static int[] packetTime_ms = {200, 3000, 200, 200, 100, 2000};
-    public static int timeToSumInPacketTime = 2000;
-    public static double packetTimeFactor = 1.0;
+    public static int timeToSumInPacketTime = 3200;
+    public static double packetTimeFactor = 1.2;
+
+///////// configurações que usei para tentar utilizar modo zero de maneira simplificada.
+//    public static int[] packetTime_ms = {1000, 1000, 1000, 1000, 1000, 1000};
+//    public static int timeToSumInPacketTime = 0;
+//    public static double packetTimeFactor = 1.0;
+
     public static int MAX_PACKET_TIME = 4000;
 
     public static int numDevices = devNames.length;
@@ -165,6 +170,7 @@ public class Device {
         for (int ind = 0; ind < packetTime_ms.length; ind++) {
             if(allSFS[ind] == this.SF){
                 return  packetTime_ms[ind];
+                //return  (4000-790+packetTime_ms[ind])/4;
             }
         }
         return MAX_PACKET_TIME;

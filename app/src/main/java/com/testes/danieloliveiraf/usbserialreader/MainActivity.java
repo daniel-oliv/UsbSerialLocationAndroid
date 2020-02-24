@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity
     private GoogleApiClient googleApiClient;
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private LocationRequest locationRequest;
-    private static final long UPDATE_INTERVAL = 1000, FASTEST_INTERVAL = 1000; // = 5 seconds
+    private static final long UPDATE_INTERVAL = 500, FASTEST_INTERVAL = 500; // = 500 ms 5 seconds
     // lists for permissions
     private ArrayList<String> permissionsToRequest;
     private ArrayList<String> permissionsRejected = new ArrayList<>();
