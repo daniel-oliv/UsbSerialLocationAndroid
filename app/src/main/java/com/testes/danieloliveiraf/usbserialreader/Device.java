@@ -33,6 +33,8 @@ public class Device {
     /// ESTÁ EM OUTRA ORDEM
     /// para 70 bytes - ou seja, string
     /// SFs - 7 a 12
+    /// Modo 1 4000 de offset e 1.2 de fator
+    // SF8: 4276
     public static int allSFS[] = {7, 8, 9, 10, 11, 12};
     public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
     public static int timeToSumInPacketTime = 3200;
@@ -129,7 +131,7 @@ public class Device {
         return (  this.strLatLong() ).getBytes();
     }
     public String padStr(String inputString, int finalLength){
-        return String.format("%1$" + length + "s", inputString);
+        return String.format("%1$" + finalLength + "s", inputString);
     }
     public String strSfAndLatLong(){
         if( location != null ){

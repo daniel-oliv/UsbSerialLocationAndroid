@@ -79,9 +79,48 @@ public class MainActivity extends AppCompatActivity
         return false;
     }
     private int nCounter = 0;
-    static int curTime = 0, sentTime = 0, curTimeDelayed = 0;
+    static int curTime = 0, sentTime = 0, curTimeDelayed = 0, infoTime = 0;
     int TIMER_DELAY = 215;
     public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
+    public static SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+    public String fieldsToShow [];
+    public void restartFields(){
+        fieldsToShow = new String[Device.devNames.length + 1];
+        for (String str: fieldsToShow) {
+            str = "";
+        }
+    }
+    public void setField(int i, String str){
+        if(fieldsToShow != null && fieldsToShow.length > i){
+            fieldsToShow[i] = str;
+        }else{
+            display.append("Fields null");
+        }
+    }
+    public void setAnotherField(String str){
+        if(fieldsToShow != null && fieldsToShow.length > 1){
+            fieldsToShow[fieldsToShow.length - 1] = str;
+        }else{
+            display.append("Fields null");
+        }
+    }
+    public void printFields(){
+        if(display != null) {
+            display.setText("Campos " + "\n");
+            if (fieldsToShow != null) {
+                for (String str : fieldsToShow) {
+                    if (str != null)
+                        display.append(str);
+                    else {
+                        display.append("Field null " + "\n");
+                    }
+                }
+            } else {
+                display.append("Fields null");
+            }
+        }
+
+    }
 
 
     /// location variables
@@ -308,7 +347,7 @@ public class MainActivity extends AppCompatActivity
         });
 
         Device.initList();
-
+        restartFields();
         timerHandler.post(new MyRunnable(timerHandler, iTimer, display));
     }
 
@@ -594,7 +633,7 @@ public class MainActivity extends AppCompatActivity
         //if(this.location == null || location.distanceTo(this.location) > 12){
         this.location = location;
         Device.location = location;
-        locationTv.setText("Latitude : " + location.getLatitude() + "\nLongitude : " + location.getLongitude());
+        locationTv.setText("Lat. : " + location.getLatitude() + ", Long.: " + location.getLongitude());
     }
   }
 
@@ -603,6 +642,8 @@ public class MainActivity extends AppCompatActivity
         private int i;
         private TextView textView;
         private ArrayList<Device> readyToSend;
+        private String timeStr;
+        private Date realTime;
 
         public MyRunnable(Handler handler, int i, TextView textView) {
             this.handler = handler;
@@ -610,6 +651,8 @@ public class MainActivity extends AppCompatActivity
         }
         @Override
         public void run() {
+            realTime = Calendar.getInstance().getTime();
+            timeStr = "               Hora: " + MainActivity.timeFormat.format(realTime)+ "        " + "\n";
             //this.handler.postDelayed(this, TIMER_DELAY);
             iTimer++;
 //            display.append("Thread curTime: " + curTime + "\n");
@@ -619,10 +662,13 @@ public class MainActivity extends AppCompatActivity
             }
             curTimeDelayed = curTime;
             curTime = iTimer * TIMER_DELAY;
-            if(curTime % 5000 == 0){
-                display.append("Mode de envio: " + modeToSend + "\n" );
-                display.append("Offset time: " + Device.timeToSumInPacketTime + "\n" );
-                display.append("Tempo de espera: " + Device.printArray(Device.getWaitTimeArray()) + "\n" );
+            if(curTime - infoTime >= 5000){
+                infoTime = curTime;
+                String anotherData;
+                anotherData = ("Modo de envio: " + modeToSend + "\n" );
+                anotherData += ("Offset time: " + Device.timeToSumInPacketTime + "\n" );
+                anotherData += ("Tempo de espera: " + Device.printArray(Device.getWaitTimeArray()) + "\n" );
+                setAnotherField(anotherData);
             }
             if(modeToSend == 0){
                 runMode0();
@@ -632,7 +678,7 @@ public class MainActivity extends AppCompatActivity
 
 
             if(curTime > 1000000000){
-                display.append("Zerei!!!!!!!: " + "\n" );
+                setAnotherField("Zerei!!!!!!!: " + "\n" );
                 curTime = 0;
                 sentTime = 0;
                 iTimer = 0;
@@ -642,12 +688,14 @@ public class MainActivity extends AppCompatActivity
                 }
 
             }
+            printFields();
             this.handler.postDelayed(this, TIMER_DELAY);
         }
 
 
         ////  mandar uma vez a cada chamado da thread (run()), observando apenas se
         public void runMode1(){
+            int currentIndex = -1;
             Device devToSent = null;
             for (int m = 0; m < Device.devNames.length; m++){
                 Device dev = Device.list.get(Device.devNames[m]);
@@ -656,9 +704,11 @@ public class MainActivity extends AppCompatActivity
                     if (devToSent != null) {
                         if (devToSent.sentTime > dev.sentTime) { /// se o dispositivo selecionado para enviar tiver enviado depois, pegar o outro
                             devToSent = dev;
+                            currentIndex = m;
                         }
                     }else{ /// se não foi selecionado nenhum, pegar esse por enquanto
                         devToSent = dev;
+                        currentIndex = m;
                     }
                 }
 
@@ -667,14 +717,14 @@ public class MainActivity extends AppCompatActivity
             if(devToSent != null){
                 /// treating SF changed by the user
                 if(devToSent.treatCommand().length() == 0){
-                    display.append("Problema ao executar comando" + "\n" );
+                    setAnotherField("Problema ao executar comando" + "\n" );
                 }
                 if (usbService != null) {
                     String strCmd = devToSent.strSfAndLatLong();
                     if(strCmd.isEmpty()){
-                        display.append("Ative a localização. \n" );
+                        setAnotherField("Ative a localização. \n" );
                     }else{
-                        display.append("Enviando: " + strCmd + "\n" );
+                        setField(currentIndex, timeStr + strCmd + "\n" );
                         usbService.write(strCmd.getBytes());
                         sentTime = curTime;
                         devToSent.sentTime = sentTime;
@@ -686,7 +736,7 @@ public class MainActivity extends AppCompatActivity
         public void runMode0(){
             if(Device.current == null)
             {
-                display.append("null device");
+                setAnotherField("null device");
                 Device.next();
             }
 
@@ -699,14 +749,14 @@ public class MainActivity extends AppCompatActivity
                 Device.next();
                 /// treating SF changed by the user
                 if(Device.current.treatCommand().length() == 0){
-                    display.append("Problema ao executar comando" + "\n" );
+                    setAnotherField("Problema ao executar comando" + "\n" );
                 }
                 if (usbService != null && Device.current != null) {
                     String strCmd = Device.current.strSfAndLatLong();
                     if(strCmd.isEmpty()){
-                        display.append("Ative a localização. \n" );
+                        setAnotherField("Ative a localização. \n" );
                     }else{
-                        display.append("Enviando: " + strCmd + "\n" );
+                        setField(Device.currentIndex, timeStr + strCmd + "\n");
                         usbService.write(strCmd.getBytes());
                         sentTime = curTime;
                     }
