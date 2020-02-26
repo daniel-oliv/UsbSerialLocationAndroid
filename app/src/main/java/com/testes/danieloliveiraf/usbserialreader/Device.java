@@ -33,12 +33,20 @@ public class Device {
     /// ESTÁ EM OUTRA ORDEM
     /// para 70 bytes - ou seja, string
     /// SFs - 7 a 12
-    /// Modo 1 4000 de offset e 1.2 de fator
-    // SF8: 4276
+    /// Modo 1 4000 de offset e 1.2 de fator - (colocar 100 ms a mais para cada)
+    // SF7: 4256 - disp 4 - 4100 de offset
+    // SF8: 4276 - disp 4 - 4000 de offset
+    // SF9: 5504 - disp 12 5000 de offset
+    // SF10:
+    // SF11: 5480 - disp 16 3800 de offset
+    // SF12: 7268 - 4100 de off 3100 tb funcionou
+
     public static int allSFS[] = {7, 8, 9, 10, 11, 12};
-    public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
-    public static int timeToSumInPacketTime = 3200;
-    public static double packetTimeFactor = 1.2;
+//    public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
+    public static int[] packetTime_ms = {4356, 4376, 4476, 5504, 5480, 7268};
+//    public static int[] packetTime_ms = {4300, 4300, 4400, 5500, 5400, 7200};
+    public static int timeToSumInPacketTime = 0;
+    public static double packetTimeFactor = 1.0;
 
 ///////// configurações que usei para tentar utilizar modo zero de maneira simplificada.
 //    public static int[] packetTime_ms = {1000, 1000, 1000, 1000, 1000, 1000};
