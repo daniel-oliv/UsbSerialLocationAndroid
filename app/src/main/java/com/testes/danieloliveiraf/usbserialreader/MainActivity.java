@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity
     }
     private int nCounter = 0;
     static int curTime = 0, sentTime = 0, curTimeDelayed = 0;
-    int TIMER_DELAY = 400;
+    int TIMER_DELAY = 215;
     public static SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd/MM - HH:mm:ss");
 
 
