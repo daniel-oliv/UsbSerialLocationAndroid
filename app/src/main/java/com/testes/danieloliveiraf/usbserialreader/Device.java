@@ -123,11 +123,14 @@ public class Device {
 //        return ret;
 //    }
 
-    //   >19>Lat:-18.87878,Long:-42.787898798;
+    //   >19>Lat:-18.8787814,Long:-42.787898798;
+    //   >4>SF:8|Lat:-18.9168416,Long:-48.2607992;
     public byte[] cmdSendLatLong(){
         return (  this.strLatLong() ).getBytes();
     }
-
+    public String padStr(String inputString, int finalLength){
+        return String.format("%1$" + length + "s", inputString);
+    }
     public String strSfAndLatLong(){
         if( location != null ){
             return (this.ID_STR() + SF_STR + SF + END_CMD_CHAR + LAT_STR + location.getLatitude() + "," + LONG_STR + location.getLongitude() + END_MSG_CHAR);
