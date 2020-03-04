@@ -24,8 +24,8 @@ public class Device {
 //    public static String[] devNames = {"2", "4", "12", "16", "17", "19"};
 //    public static int initialDevSFs[] = {7, 8, 9, 11, 12, 10};
 
-//    public static String[] devNames = {"2", "4", "12", "16", "17"};
-    public static String[] devNames = {"19", "13", "6", "5", "9"}; //public static String[] devNames = {"14", "13", "6", "5", "9"};
+    public static String[] devNames = {"2", "4", "12", "16", "17"};
+//    public static String[] devNames = {"19", "13", "6", "5", "9"}; //public static String[] devNames = {"14", "13", "6", "5", "9"};
 
     public static int initialDevSFs[] = {7, 8, 9, 11, 12};
 
