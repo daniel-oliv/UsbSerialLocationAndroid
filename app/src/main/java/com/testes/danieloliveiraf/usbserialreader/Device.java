@@ -24,8 +24,8 @@ public class Device {
 //    public static String[] devNames = {"2", "4", "12", "16", "17", "19"};
 //    public static int initialDevSFs[] = {7, 8, 9, 11, 12, 10};
 
-    public static String[] devNames = {"2", "4", "12", "16", "17"};
-//    public static String[] devNames = {"19", "13", "6", "5", "9"}; //public static String[] devNames = {"14", "13", "6", "5", "9"};
+//    public static String[] devNames = {"2", "4", "12", "16", "17"};
+    public static String[] devNames = {"19", "13", "6", "5", "9"}; //public static String[] devNames = {"14", "13", "6", "5", "9"};
 
     public static int initialDevSFs[] = {7, 8, 9, 11, 12};
 
@@ -44,9 +44,10 @@ public class Device {
     // SF12: 7268 - 4100 de off 3100 tb funcionou
 
     public static int allSFS[] = {7, 8, 9, 10, 11, 12};
-//    public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
-    public static int[] packetTime_ms = {4356, 4376, 4476, 5504, 5480, 7268};
-//    public static int[] packetTime_ms = {4300, 4300, 4400, 5500, 5400, 7200};
+    ///public static int[] packetTime_ms = {130, 230, 420, 790, 1400, 2640};
+    ///public static int[] packetTime_ms = {4356, 4376, 4476, 5504, 5480, 7268};
+    public static int[] packetTime_ms = {4356+400, 4376+400, 4476+400, 5504+400, 5480+400, 7268+400 };
+
     public static int timeToSumInPacketTime = 0;
     public static double packetTimeFactor = 1.0;
 
